@@ -1,0 +1,321 @@
+model Strawberry
+
+uses "mmxprs"
+
+declarations
+	NMonths = 12
+	Months = 1..NMonths
+    Ingredients: set of string
+    Nutrients: set of string
+    Products: set of string
+    MonthNames: set of string
+    GrowingCost: integer
+    IngredientBuyPrice: array(Ingredients) of real
+    IngredientSupply: array(Ingredients,Months) of integer
+    IngredientSellPrice: array(Ingredients) of real
+    IngredientDemand: array(Ingredients,Months) of integer
+    ProductionCapacity: integer
+    ProductMakeCost: real
+    ProductSellPrice: array(Products) of real
+    ProductDemand: array(Products,Months) of real
+    NutrientContent: array(Nutrients,Ingredients) of real
+    ContentRequirement: array(Nutrients,Products) of real
+    ContentLimit: array(Nutrients,Products) of real
+    UnitStorageCost: real
+    WarehouseSize: integer
+    IngredientUsed: array(Ingredients, Products, Months) of mpvar
+    IngredientSold: array(Ingredients, Months) of mpvar
+    ProductMake: array(Products,Months) of mpvar
+    ProductSold: array(Products,Months) of mpvar
+    ProductStock: array(Products,Months) of mpvar
+end-declarations
+
+initializations from "StrawberryFieldsPlan.dat"
+	Ingredients Nutrients Products MonthNames
+    GrowingCost IngredientBuyPrice IngredientSupply IngredientSellPrice
+    IngredientDemand ProductionCapacity ProductMakeCost
+    ProductSellPrice ProductDemand NutrientContent
+    ContentRequirement ContentLimit UnitStorageCost WarehouseSize
+end-initializations
+
+forall(p in Products, n in  Nutrients,m in Months) do
+    BlendLB(n, p, m) := sum(i in Ingredients) IngredientUsed(i, p, m) * NutrientContent(n,i) >= ProductMake(p,m)*ContentRequirement(n,p)
+    BlendUB(n, p, m) := sum(i in Ingredients) IngredientUsed(i, p, m) * NutrientContent(n,i) <= ProductMake(p,m)*ContentLimit(n,p)
+end-do
+
+forall(i in Ingredients, m in Months) do
+	TotalIngredientUsed(i,m) := sum(p in Products) IngredientUsed(i, p, m)
+	SupplyCS(i,m) := TotalIngredientUsed(i,m) <= IngredientSupply(i,m)
+end-do
+
+forall(p in Products,m in Months) ProductDemandCS(p,m) := ProductSold(p,m) <= ProductDemand(p,m)
+forall(m in Months) ProductionCapacityCS(m) := sum(p in Products) ProductMake(p,m) <= ProductionCapacity
+
+if MonthNames(1) = "Jan" then
+    forall(p in Products, m in Months) do
+    	if m = 1 then
+    		InventoryCS(p, m) := ProductStock(p, m) = ProductStock(p, NMonths) + ProductMake(p, m) - ProductSold(p, m)
+    	else
+    		InventoryCS(p, m) := ProductStock(p, m) = ProductStock(p, m-1) + ProductMake(p, m) - ProductSold(p, m)
+    	end-if
+    end-do
+    forall(m in Months) do
+        Production(m) := sum(p in Products) ProductMake(p, m)
+    	SpaceUsed(m) := sum(p in Products) ProductStock(p, m)
+        WarehouseCS(m) := SpaceUsed(m) <= WarehouseSize
+    end-do
+else
+    forall(m in Months, p in Products) NoInventoryCS(p,m) := ProductSold(p,m) = ProductMake(p,m)
+    forall(m in Months) do
+    	SpaceUsed(m) := sum(p in Products) ProductMake(p, m)
+        WarehouseCS(m) := SpaceUsed(m) <= WarehouseSize
+    end-do
+
+end-if
+
+
+TotalSpaceUsed := sum(m in Months) SpaceUsed(m)
+
+forall(i in Ingredients, m in Months) IngredientDemandCS(i,m) := IngredientSold(i,m) <= IngredientDemand(i,m)
+
+ProductionCost := (sum(p in Products, m in Months) ProductMake(p,m)) * ProductMakeCost
+StorageCost := UnitStorageCost*TotalSpaceUsed
+IngredientCost := sum(i in Ingredients, m in Months) (TotalIngredientUsed(i, m) + IngredientSold(i,m))*IngredientBuyPrice(i)
+TotalCost := ProductionCost + StorageCost + IngredientCost + GrowingCost
+TotalIncome := sum(p in Products, m in Months) ProductSold(p,m) * ProductSellPrice(p) + sum(i in Ingredients, m in Months) IngredientSold(i,m) * IngredientSellPrice(i)
+TotalProfit := TotalIncome - TotalCost
+maximize(TotalProfit)
+
+
+forall(i in Ingredients, m in Months) do
+    writeln(getsol(IngredientUsed(i, "Premium ice cream", m)))
+end-do
+if MonthNames(1) = "Jan" then
+
+    forall(p in Products) do
+    	writeln
+    	writeln(p, ":")
+    	forall(m in Months) do
+    		write("In ", MonthNames(m), ": ")
+    		write("make ", strfmt(getsol(ProductMake(p, m)),3), "; ")
+    		write("sell ", strfmt(getsol(ProductSold(p, m)),3), "; ")
+    		write("stock ", strfmt(getsol(ProductStock(p, m)),3))
+    		writeln
+    	end-do
+    end-do
+
+    writeln
+    forall(p in Products, m in Months) do
+    	UnsatisfiedDemand := getsol(ProductDemand(p, m) - ProductSold(p, m))
+    	if UnsatisfiedDemand>0 then
+    		writeln("In ", MonthNames(m), " unsatisfied demand for ", strfmt(p, -7), " is ", strfmt(UnsatisfiedDemand, 3))
+    	end-if
+    end-do
+
+    writeln
+    forall(m in Months) do
+    	write("In ", MonthNames(m), ": ")
+    	write("production ", strfmt(getsol(Production(m)),5))
+    	writeln
+    end-do
+
+    writeln
+    forall(m in Months) do
+    	write("In ", MonthNames(m), ": ")
+    	write("space used ", strfmt(getsol(SpaceUsed(m)),5))
+    	writeln
+    end-do
+    write("  Total space used ", strfmt(getsol(TotalSpaceUsed),5))
+
+    writeln
+
+    forall(i in Ingredients) do
+    	writeln
+    	writeln(i, ":")
+    	forall(m in Months) do
+    		write("In ", MonthNames(m), ": ")
+    		write("Buy ", strfmt(getsol(TotalIngredientUsed(i, m)+IngredientSold(i, m)),3), "; ")
+    		write("Use ", strfmt(getsol(TotalIngredientUsed(i, m)),3), "; ")
+    		write("Sell ", strfmt(getsol(IngredientSold(i, m)),3), "; ")
+
+    		writeln
+    	end-do
+
+    end-do
+
+    writeln
+    writeln("Total Profit = £", getsol(TotalProfit))
+
+    ! Extra research if expanding Ice Cream machine production capacity increases Total Profit and limits unsatisfied demand
+    ! Note also more strawberries will be used for the extra ice cream, so there is less unused fresh strawberies
+    Delta := 1.00
+
+    writeln
+    writeln("Extra research if expanding Ice Cream machine production capacity increases
+    Total Profit and limits unsatisfied demand. Note also more strawberries
+    will be used for the extra ice cream, so there is less unused fresh strawberies")
+    repeat
+        forall(m in Months) ProductionCapacityCS(m) := sum(p in Products) ProductMake(p,m) <= Delta * ProductionCapacity
+        maximize(TotalProfit)
+
+        writeln
+        writeln("For Production Capacity = ", Delta * ProductionCapacity)
+        forall(p in Products, m in Months) do
+        	UnsatisfiedDemand := getsol(ProductDemand(p, m) - ProductSold(p, m))
+        	if UnsatisfiedDemand>0 then
+        		writeln("In ", MonthNames(m), " unsatisfied demand for ", strfmt(p, -7), " is ", strfmt(UnsatisfiedDemand, 3))
+        	end-if
+        end-do
+        writeln("Total Profit = £", getsol(TotalProfit))
+        Delta := Delta + 0.25
+    until Delta > 3.00
+else
+
+    forall(p in Products) do
+    	writeln
+    	writeln(p, ":")
+    		write("In ", MonthNames(1), ": ")
+    		write("make ", strfmt(getsol(ProductMake(p, 1)),3), "; ")
+    		write("sell ", strfmt(getsol(ProductSold(p, 1)),3), "; ")
+    		write("stock ", strfmt(getsol(ProductStock(p, 1)),3))
+    		writeln
+    end-do
+
+    writeln
+    forall(p in Products) do
+    	UnsatisfiedDemand := getsol(ProductDemand(p, 1) - ProductSold(p, 1))
+    	if UnsatisfiedDemand>0 then
+    		writeln("In ", MonthNames(1), " unsatisfied demand for ", strfmt(p, -7), " is ", strfmt(UnsatisfiedDemand, 3))
+    	end-if
+    end-do
+
+    writeln
+
+	write("In ", MonthNames(1), ": ")
+	write("production ", strfmt(getsol(sum(p in Products)ProductSold(p,1)),5))
+	writeln
+
+
+
+    writeln
+
+	write("In ", MonthNames(1), ": ")
+	write("space used ", strfmt(getsol(SpaceUsed(1)),5))
+	writeln
+
+    write("  Total space used ", strfmt(getsol(TotalSpaceUsed),5))
+
+    writeln
+
+    forall(i in Ingredients) do
+    	writeln
+    	writeln(i, ":")
+		write("In ", MonthNames(1), ": ")
+		write("Buy ", strfmt(getsol(TotalIngredientUsed(i, 1)+IngredientSold(i, 1)),3), "; ")
+		write("Use ", strfmt(getsol(TotalIngredientUsed(i, 1)),3), "; ")
+		write("Sell ", strfmt(getsol(IngredientSold(i, 1)),3), "; ")
+		writeln
+    end-do
+
+    writeln
+    writeln("Total Profit = £", getsol(TotalProfit))
+
+end-if
+
+if MonthNames(1) = "Jan" then
+    forall(m in Months) ProductionCapacityCS(m) := sum(p in Products) ProductMake(p,m) <= ProductionCapacity
+    maximize(TotalProfit)
+    fopen("Plan.csv", F_OUTPUT)
+    forall(p in Products) do
+        writeln("Product,", p)
+        forall(m in Months) write(",", MonthNames(m))
+        writeln
+        write("Make")
+        forall(m in Months) write(",", getsol(ProductMake(p, m)))
+        writeln
+        write("Sell")
+        forall(m in Months) write(",", getsol(ProductSold(p, m)))
+        writeln
+        write("Stock")
+        forall(m in Months) write(",", getsol(ProductStock(p, m)))
+        writeln
+    end-do
+    forall(i in Ingredients) do
+        writeln("Ingredient,", i)
+        forall(m in Months) write(",", MonthNames(m))
+        writeln
+        write("Buy")
+        forall(m in Months) write(",", getsol(IngredientSold(i, m) + TotalIngredientUsed(i,m)))
+        writeln
+        write("Use")
+        forall(m in Months) write(",", getsol(TotalIngredientUsed(i, m)))
+        writeln
+        write("Sell")
+        forall(m in Months) write(",", getsol(IngredientSold(i, m)))
+        writeln
+    end-do
+    writeln
+    writeln("Total Profit = £,", getsol(TotalProfit))
+
+    ! Extra research if expanding Ice Cream machine production capacity increases Total Profit and limits unsatisfied demand
+    ! Note also more strawberries will be used for the extra ice cream, so there is less unused fresh strawberies
+    Delta := 1.00
+
+    writeln
+    writeln("Extra research if expanding Ice Cream machine production capacity increases
+    Total Profit and limits unsatisfied demand. Note also more strawberries
+    will be used for the extra ice cream, so there is less unused fresh strawberies.
+    It doesn't make sense to increase freezer capacity since it is never in full capacity.")
+    writeln
+    writeln("Production Capacity, Total Profit, Unsatisfied Demand")
+    repeat
+
+        forall(m in Months) ProductionCapacityCS(m) := sum(p in Products) ProductMake(p,m) <= Delta * ProductionCapacity
+
+        maximize(TotalProfit)
+        writeln
+        forall(p in Products, m in Months)NotSatisfiedDemand(p,m) := getsol(ProductDemand(p, m) - ProductSold(p, m))
+        writeln(Delta * ProductionCapacity,",",getsol(TotalProfit),",",getsol(sum(p in Products, m in Months) NotSatisfiedDemand(p,m)),",")
+        writeln
+        Delta := Delta + 0.25
+    until Delta > 3.00
+    fclose(F_OUTPUT)
+else
+    if Products(1) = "Regular ice cream" then
+        fopen("Regular.csv", F_OUTPUT)
+    else
+        fopen("All.csv", F_OUTPUT)
+    end-if
+    forall(p in Products) do
+        writeln("Product,", p)
+        write(",", MonthNames(1))
+        writeln
+        write("Make")
+        write(",", getsol(ProductMake(p, 1)))
+        writeln
+        write("Sell")
+        write(",", getsol(ProductSold(p, 1)))
+        writeln
+        write("Stock")
+        write(",", getsol(ProductStock(p, 1)))
+        writeln
+    end-do
+    forall(i in Ingredients) do
+        writeln("Ingredient,", i)
+        write(",", MonthNames(1))
+        writeln
+        write("Buy")
+        write(",", getsol(IngredientSold(i, 1) + TotalIngredientUsed(i,1)))
+        writeln
+        write("Use")
+        write(",", getsol(TotalIngredientUsed(i, 1)))
+        writeln
+        write("Sell")
+        write(",", getsol(IngredientSold(i, 1)))
+        writeln
+    end-do
+    writeln
+    writeln("Total Profit = £,", getsol(TotalProfit))
+end-if
+
+end-model

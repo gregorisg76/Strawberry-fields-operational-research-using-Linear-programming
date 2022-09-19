@@ -1,0 +1,86 @@
+Product,Low fat ice cream
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Make,100,170,1230,2000,1000,500,0,500,600,300,0,400
+Sell,100,100,100,400,800,1200,1600,1200,600,200,100,400
+Stock,0,70,1200,2800,3000,2300,700,0,0,100,0,0
+Product,Regular ice cream
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Make,150,150,150,0,0,0,0,0,650,980,0,70
+Sell,150,150,150,0,0,0,0,0,650,300,150,600
+Stock,0,0,0,0,0,0,0,0,0,680,530,0
+Product,Premium ice cream
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Make,120,120,620,0,1000,1500,2000,1500,750,490,0,0
+Sell,120,120,120,500,1000,1500,2000,1500,750,250,120,120
+Stock,0,0,500,0,0,0,0,0,0,240,120,0
+Ingredient,Fresh strawberries
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,100,100,100,500,1580,2950,3000,2950,1375,680,100,200
+Use,0,0,0,0,580,950,1000,950,875,580,0,0
+Sell,100,100,100,500,1000,2000,2000,2000,500,100,100,200
+Ingredient,Frozen strawberries
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,329.4736842,351.5789474,896.8421053,731.5789474,126.3157895,0,0,0,100,200,200,348.4210526
+Use,129.4736842,151.5789474,696.8421053,631.5789474,126.3157895,0,0,0,0,0,0,148.4210526
+Sell,200,200,200,100,0,0,0,0,100,200,200,200
+Ingredient,Egg yolk
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,38,41.5,169.5,100,200,250,300,250,207.5,186.5,0,27
+Use,38,41.5,169.5,100,200,250,300,250,207.5,186.5,0,27
+Sell,0,0,0,0,0,0,0,0,0,0,0,0
+Ingredient,Thick cream
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,509.7821782,510.6831683,543.6336634,525.7425743,551.4851485,564.3564356,577.2277228,564.3564356,553.4158416,548.009901,500,506.950495
+Use,9.782178218,10.68316832,43.63366337,25.74257426,51.48514851,64.35643564,77.22772277,64.35643564,53.41584158,48.00990099,0,6.95049505
+Sell,500,500,500,500,500,500,500,500,500,500,500,500
+Ingredient,Thin cream
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,500,500,500,500,500,500,500,500,500,500,500,500
+Use,0,0,0,0,0,0,0,0,0,0,0,0
+Sell,500,500,500,500,500,500,500,500,500,500,500,500
+Ingredient,Skimmed milk
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,0,0,0,0,0,0,0,0,0,0,0,0
+Use,0,0,0,0,0,0,0,0,0,0,0,0
+Sell,0,0,0,0,0,0,0,0,0,0,0,0
+Ingredient,Sugar
+,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Buy,66.0750641,78.73433246,357.4913351,361.693382,356.7972903,341.970297,338.7643564,341.970297,346.6453465,318.4318416,0,84.98352892
+Use,66.0750641,78.73433246,357.4913351,361.693382,356.7972903,341.970297,338.7643564,341.970297,346.6453465,318.4318416,0,84.98352892
+Sell,0,0,0,0,0,0,0,0,0,0,0,0
+
+Total Profit = £,69808.5864
+
+Extra research if expanding Ice Cream machine production capacity increases
+    Total Profit and limits unsatisfied demand. Note also more strawberries
+    will be used for the extra ice cream, so there is less unused fresh strawberies. 
+    It doesn't make sense to increase freezer capacity since it is never in full capacity.
+
+Production Capacity, Total Profit, Unsatisfied Demand
+
+2000,69808.5864,7850,
+
+
+2500,71219.38448,6800,
+
+
+3000,72431.65741,5500,
+
+
+3500,73438.93283,3800,
+
+
+4000,74308.3356,2300,
+
+
+4500,75103.45524,1500,
+
+
+5000,75603.49529,0,
+
+
+5500,75662.33319,0,
+
+
+6000,75662.33319,0,
+
